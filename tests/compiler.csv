@@ -1,0 +1,4 @@
+Test Name,Source File,Expected Output File
+DeclareIntLiteral,DeclareIntLiteral.c,DeclareIntLiteral.txt
+DeclareIntLiteral2,DeclareIntLiteral2.c,DeclareIntLiteral2.txt
+DeclareIntLiteral3,DeclareIntLiteral3.c,DeclareIntLiteral3.txt
