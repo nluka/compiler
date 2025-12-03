@@ -19,32 +19,43 @@ public:
     AstScene(QObject *parent = nullptr)
         : QGraphicsScene(parent)
     {
-        // Initial large scene centered at origin
-        setSceneRect(-2000, -2000, 4000, 4000);
     }
 
-    // Center the given view on the current items
     void centerViewOnItems(QGraphicsView *view)
     {
-        if (!view) return;
+        if (!view)
+            return;
 
-        QRectF itemsRect = itemsBoundingRect(); // bounding rect of all items
+        QGraphicsScene *scene = view->scene();
+        if (!scene)
+            return;
+
+        QRectF itemsRect = scene->itemsBoundingRect();
         if (itemsRect.isNull()) {
-            // fallback to scene center
             view->centerOn(0, 0);
-        } else {
-            QPointF center = itemsRect.center();
-            view->centerOn(center);
+            return;
         }
+        qreal pad = 20.0;
+        itemsRect.adjust(-pad, -pad, pad, pad);
+
+        view->setSceneRect(itemsRect);
+        view->centerOn(itemsRect.center());
     }
 
-    // Optionally, call this after adding a new node
     void addNode(QGraphicsItem *node)
     {
         addItem(node);
         // Expand scene rect if necessary
         QRectF rect = sceneRect().united(node->sceneBoundingRect().adjusted(-50, -50, 50, 50));
         setSceneRect(rect);
+    }
+
+    void addOriginCrosshair(qreal offset_x = 0, qreal offset_y = 0, qreal radius = 10)
+    {
+        addLine(offset_x, offset_y, 0 + offset_x, radius + offset_y);
+        addLine(offset_x, offset_y, radius + offset_x, 0 + offset_y);
+        addLine(offset_x, offset_y, 0 + offset_x, -radius + offset_y);
+        addLine(offset_x, offset_y, -radius + offset_x, 0 + offset_y);
     }
 
 protected:
@@ -56,7 +67,7 @@ protected:
         QRectF rect = sceneRect();
 
         // Expand dynamically when near edges
-        const qreal pad = 50.0;
+        qreal pad = 50.0;
         if (!rect.contains(p)) {
             rect.adjust(-pad, -pad, pad, pad);
             setSceneRect(rect);
@@ -78,8 +89,8 @@ public:
 protected:
     void wheelEvent(QWheelEvent *event) override
     {
-        const double zoomInFactor = 1.15;
-        const double zoomOutFactor = 1.0 / zoomInFactor;
+        double zoomInFactor = 1.15;
+        double zoomOutFactor = 1.0 / zoomInFactor;
 
         // Zoom direction
         double factor = (event->angleDelta().y() > 0) ? zoomInFactor : zoomOutFactor;
@@ -101,10 +112,9 @@ class AstNodeRect : public QObject, public QGraphicsRectItem
 
 public:
     AstScene *parentScene = nullptr;
-    // bool isSelected = false;
     QString nodeName;
 
-    AstNodeRect(const QString& nodeName_, const QRectF &rect, AstScene *parentScene_)
+    AstNodeRect(QString const &nodeName_, QRectF const &rect, AstScene *parentScene_)
         : QGraphicsRectItem(rect), nodeName(nodeName_), parentScene(parentScene_)
     {
         setBrush(QBrush(Qt::white));
@@ -114,10 +124,10 @@ public:
     }
 
 signals:
-    void clicked(AstNodeRect* self);  // Emit pointer to self when clicked
+    void clicked(AstNodeRect *self);  // Emit pointer to self when clicked
 
 protected:
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override
+    QVariant itemChange(GraphicsItemChange change, QVariant const &value) override
     {
         if (change == QGraphicsItem::ItemSelectedHasChanged) {
             if (this->isSelected()) {
@@ -132,17 +142,34 @@ protected:
 
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override
     {
-        for (QGraphicsItem* item : parentScene->selectedItems()) {
-            // if (item != this) {
+        for (QGraphicsItem *item : parentScene->selectedItems()) {
+            if (item != this) {
                 item->setSelected(false);
-            // }
+            }
         }
         setSelected(!isSelected());
-        QGraphicsRectItem::mousePressEvent(event);
+        event->accept(); // IMPORTANT: tells Qt we handled it
+    }
+
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override
+    {
+        event->accept(); // IMPORTANT: prevents Qt from re-selecting the item
+    }
+
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override
+    {
+        setCursor(Qt::PointingHandCursor);
+        QGraphicsRectItem::hoverEnterEvent(event);
+    }
+
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override
+    {
+        unsetCursor();
+        QGraphicsRectItem::hoverLeaveEvent(event);
     }
 };
 
-AstNodeRect* createNode(AstScene *scene, const QString &name, qreal x, qreal y, CompilationFlowWindow *window)
+AstNodeRect *createNode(AstScene *scene, QString const &name, qreal x, qreal y, CompilationFlowWindow *window)
 {
     AstNodeRect *rect = new AstNodeRect(name, QRectF(0, 0, 120, 50), scene);
     rect->setPos(x, y);
@@ -156,29 +183,29 @@ AstNodeRect* createNode(AstScene *scene, const QString &name, qreal x, qreal y, 
     label->setPos((r.width() - t.width()) / 2,
                   (r.height() - t.height()) / 2);
 
-    window->connect(rect, &AstNodeRect::clicked, window, [](AstNodeRect* item){
-        qDebug() << "Node clicked:" << item->nodeName;
+    window->connect(rect, &AstNodeRect::clicked, window, [](AstNodeRect *rect){
+        qDebug() << "Node clicked:" << rect->nodeName;
     });
 
     return rect;
 }
 
-QPointF bottomCenter(QGraphicsRectItem* item) {
+QPointF bottomCenter(QGraphicsRectItem *item) {
     QRectF r = item->rect();
     return item->mapToScene(r.center().x(), r.bottom());
 }
 
-QPointF topCenter(QGraphicsRectItem* item) {
+QPointF topCenter(QGraphicsRectItem *item) {
     QRectF r = item->rect();
     return item->mapToScene(r.center().x(), r.top());
 }
 
-void connectNodes(QGraphicsScene* scene, QGraphicsRectItem* parent, QGraphicsRectItem* child)
+void connectNodes(QGraphicsScene *scene, QGraphicsRectItem *parent, QGraphicsRectItem *child)
 {
     QPointF p1 = bottomCenter(parent);
     QPointF p2 = topCenter(child);
 
-    QGraphicsLineItem* line = scene->addLine(QLineF(p1, p2), QPen(Qt::black, 2));
+    QGraphicsLineItem *line = scene->addLine(QLineF(p1, p2), QPen(Qt::black, 2));
     Q_UNUSED(line);
 }
 
@@ -199,39 +226,31 @@ CompilationFlowWindow::CompilationFlowWindow(QWidget *parent, QString const &tit
         const int hSpacing = 150;
 
         // Root
-        AstNodeRect* root = createNode(scene, "Root", 400, 0, this);
+        AstNodeRect *root = createNode(scene, "Root", 400, 0, this);
 
         // Level 1
-        AstNodeRect* left1 = createNode(scene, "Left1", root->x() - hSpacing, root->y() + levelY, this);
-        AstNodeRect* right1 = createNode(scene, "Right1", root->x() + hSpacing, root->y() + levelY, this);
+        AstNodeRect *left1 = createNode(scene, "Left1", root->x() - hSpacing, root->y() + levelY, this);
+        AstNodeRect *right1 = createNode(scene, "Right1", root->x() + hSpacing, root->y() + levelY, this);
 
         connectNodes(scene, root, left1);
         connectNodes(scene, root, right1);
 
         // Level 2
-        AstNodeRect* left2 = createNode(scene, "Left2", left1->x() - hSpacing/2, left1->y() + levelY, this);
-        AstNodeRect* right2 = createNode(scene, "Right2", left1->x() + hSpacing/2, left1->y() + levelY, this);
+        AstNodeRect *left2 = createNode(scene, "Left2", left1->x() - hSpacing/2, left1->y() + levelY, this);
+        AstNodeRect *right2 = createNode(scene, "Right2", left1->x() + hSpacing/2, left1->y() + levelY, this);
 
-        AstNodeRect* left3 = createNode(scene, "Left3", right1->x() - hSpacing/2, right1->y() + levelY, this);
-        AstNodeRect* right3 = createNode(scene, "Right3", right1->x() + hSpacing/2, right1->y() + levelY, this);
+        AstNodeRect *left3 = createNode(scene, "Left3", right1->x() - hSpacing/2, right1->y() + levelY, this);
+        AstNodeRect *right3 = createNode(scene, "Right3", right1->x() + hSpacing/2, right1->y() + levelY, this);
 
         connectNodes(scene, left1, left2);
         connectNodes(scene, left1, right2);
         connectNodes(scene, right1, left3);
         connectNodes(scene, right1, right3);
-
-        // scene->addNode(left1);
-        // scene->addNode(left2);
-        // scene->addNode(left3);
-        // scene->addNode(right1);
-        // scene->addNode(right2);
-        // scene->addNode(right3);
     }
     ZoomableGraphicsView *view = new ZoomableGraphicsView(scene);
     view->setRenderHint(QPainter::Antialiasing);
     view->setDragMode(QGraphicsView::ScrollHandDrag);
     view->setWindowTitle("AST Tree Example");
-    // view.resize(400, 400);
     scene->centerViewOnItems(view);
     view->show();
 
@@ -250,8 +269,6 @@ CompilationFlowWindow::CompilationFlowWindow(QWidget *parent, QString const &tit
     // Set splitter as central widget
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->addWidget(splitter);
-
-    // resize(800, 600);
 }
 
 #include <CompilationFlowWindow.moc>

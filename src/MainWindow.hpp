@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
+#pragma once
 
 #include <QMainWindow>
 #include <QFileSystemWatcher>
@@ -10,29 +9,21 @@
 
 #include "CompilationFlowWindow.hpp"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
 
     void loadCsv(QString const &csvPath);
 
 private slots:
-    void on_btnOpenCompilationFlowWindow_clicked();
-    void onCsvPathChanged(const QString &path);
-    void onCsvFileModified(const QString &path);
+    void onCsvPathChanged(QString const &path);
+    void onCsvFileModified(QString const &path);
     void onTableItemChanged(QTableWidgetItem *item);
 
 private:
-    Ui::MainWindow *ui;
-    CompilationFlowWindow *compilationFlowWindow; // pointer to second window
     QFileSystemWatcher *watcher;
     FilePicker *csvFilePicker;
     DirectoryPicker *dataDirectoryPicker;
@@ -44,8 +35,5 @@ private:
         QString status;
         QStringList fields;
     };
-    // QMap<QString, RowState> lastTableState;
     QVector<RowState> testRows;
 };
-
-#endif // MAINWINDOW_HPP

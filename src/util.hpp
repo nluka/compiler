@@ -2,9 +2,9 @@
 
 #include <array>
 #include <chrono>
+#include <source_location>
 
 #include "primitives.hpp"
-// #include "stdafx.hpp"
 
 #if defined(NDEBUG)
 #   define DEBUG_MODE 0
@@ -55,14 +55,6 @@
     /// Return `true` at a chance of (1 / probability_fraction).
     bool chance(f64 probability_fraction) noexcept;
 
-    // bool set_thread_priority(s32 priority_relative_to_normal) noexcept;
-
-    // s32 utf8_to_utf16(char const *utf8_text, wchar_t *utf16_text, u64 utf16_text_capacity, std::source_location sloc = std::source_location::current()) noexcept;
-
-    // s32 utf16_to_utf8(wchar_t const *utf16_text, char *utf8_text, u64 utf8_text_capacity, std::source_location sloc = std::source_location::current()) noexcept;
-
-    std::pair<bool, std::string> utf8_lowercase(char const *utf8_text) noexcept;
-
     struct build_mode
     {
         bool debug;
@@ -74,15 +66,8 @@
 
     std::string make_str(char const *fmt, ...) noexcept;
 
-    // std::optional<bool> win32_is_mouse_inside_window(HWND hwnd) noexcept;
-
 // FILESYSTEM RELATED FUNCTIONS
 
-    /// Returns truthy int if `path_utf8` is a valid directory. Accepts Unicode characters. Performs UTF8 to UTF16 conversion. Expensive function, don't call it often.
-    s32 directory_exists(char const *path_utf8) noexcept;
-
-    /// Formats a FILETIME into a buffer. Returns length in `.first` and the formatted buffer in `.second`.
-    // std::pair<s32, std::array<char, 64>> filetime_to_string(FILETIME *time) noexcept;
     std::array<char, 32> format_file_size(u64 file_size, u64 unit_multiplier) noexcept;
     void format_file_size(u64 file_size, char *out, u64 out_size, u64 unit_multiplier) noexcept;
     wchar_t const *windows_illegal_filename_chars() noexcept;

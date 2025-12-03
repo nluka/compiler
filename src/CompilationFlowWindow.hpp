@@ -1,5 +1,4 @@
-#ifndef COMPILATIONFLOWWINDOW_HPP
-#define COMPILATIONFLOWWINDOW_HPP
+#pragma once
 
 #include <QWidget>
 
@@ -10,5 +9,3 @@ class CompilationFlowWindow : public QWidget
 public:
     explicit CompilationFlowWindow(QWidget *parent = nullptr, QString const &title = "Compilation Flow");
 };
-
-#endif // COMPILATIONFLOWWINDOW_HPP

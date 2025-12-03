@@ -16,109 +16,8 @@
 #include "util.hpp"
 
 #include "MainWindow.hpp"
-#include "ui_MainWindow.h"
 
 using CsvTable = QVector<QVector<QString>>;
-
-#if 0
-CsvTable loadCsvFile(const QString &filePath)
-{
-    CsvTable table;
-
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open file:" << filePath;
-        return table;
-    }
-
-    QTextStream stream(&file);
-
-    while (!stream.atEnd()) {
-        QString line = stream.readLine();
-        QVector<QString> row;
-
-        QString field;
-        bool inQuotes = false;
-
-        for (int i = 0; i < line.size(); ++i) {
-            QChar c = line[i];
-
-            if (c == '"') {
-                if (inQuotes && i + 1 < line.size() && line[i+1] == '"') {
-                    field += '"';   // escaped quote
-                    ++i;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            }
-            else if (c == ',' && !inQuotes) {
-                row.push_back(field);
-                field.clear();
-            }
-            else {
-                field += c;
-            }
-        }
-
-        row.push_back(field);
-        table.push_back(row);
-    }
-
-    return table;
-}
-
-void populateTableWidget(QMainWindow *main_window, QTableWidget *table, const CsvTable &data)
-{
-    if (data.size() <= 1) // need at least header + one row
-    return;
-
-    // The first row is now headers
-    const QVector<QString> &headerRow = data[0];
-    int originalCols = headerRow.size();
-    int totalCols = originalCols + 2; // "Pass" + "Open"
-
-    int dataRows = data.size() - 1; // exclude header row
-    table->setColumnCount(totalCols);
-    table->setRowCount(dataRows);
-
-    // Set headers
-    QStringList headers;
-    headers << "Explore" << "Pass"; // extra columns
-    for (const QString &h : headerRow)
-    headers << h;
-
-    table->setHorizontalHeaderLabels(headers);
-
-    // Populate rows starting from data[1]
-    for (int r = 0; r < dataRows; ++r)
-    {
-        const QVector<QString> &rowData = data[r + 1]; // skip header row
-
-        // "Open" column with button
-        QPushButton *openButton = new QPushButton("Open");
-        table->setCellWidget(r, 0, openButton);
-
-        // "Pass" column left blank
-        table->setItem(r, 1, new QTableWidgetItem(""));
-
-        // Capture row data for the button
-        QObject::connect(openButton, &QPushButton::clicked, [rowData, main_window]() {
-            QString title = "Compilation Flow (" + rowData[0] + ")";
-            CompilationFlowWindow *flow = new CompilationFlowWindow(main_window, title);
-            flow->show();
-        });
-
-        // Fill remaining columns with CSV data
-        for (int c = 0; c < originalCols; ++c)
-        {
-            table->setItem(r, c + 2, new QTableWidgetItem(rowData[c]));
-        }
-    }
-
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    table->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-}
-#endif
 
 void MainWindow::loadCsv(QString const &csvPath)
 {
@@ -131,10 +30,10 @@ void MainWindow::loadCsv(QString const &csvPath)
     if (in.atEnd())
         return; // Empty file
 
-    const QString headerLine = in.readLine().trimmed();
-    const QStringList headers = headerLine.split(',');
+    QString const headerLine = in.readLine().trimmed();
+    QStringList const headers = headerLine.split(',');
 
-    static const QStringList required = {
+    static QStringList const required = {
         "Test Name",
         "Source File",
         "Expected Output File"
@@ -150,10 +49,10 @@ void MainWindow::loadCsv(QString const &csvPath)
         return;
     }
 
-    const int statusCol = 0;
-    const int openCol = 1;
-    const int firstCsvCol = 2; // Table column where actual CSV fields begin
-    const int requiredCsvColumnCount = required.size();
+    int const statusCol = 0;
+    int const compilationFlowCol = 1;
+    int const firstCsvCol = 2; // Table column where actual CSV fields begin
+    int const requiredCsvColumnCount = required.size();
     QVector<QStringList> newCsvData;
 
     while (!in.atEnd()) {
@@ -183,7 +82,7 @@ void MainWindow::loadCsv(QString const &csvPath)
     testsTable->setColumnCount(firstCsvCol + requiredCsvColumnCount);
     {
         QStringList tableHeaders;
-        tableHeaders << "Status" << "Open";
+        tableHeaders << "Status" << "Compilation Flow";
         tableHeaders.append(required); // Append the CSV columns
         testsTable->setHorizontalHeaderLabels(tableHeaders);
     }
@@ -191,7 +90,7 @@ void MainWindow::loadCsv(QString const &csvPath)
     // Preserve "Status" from previous state (testRows) by computing a hash for the fields and checking if that row existed in previous state.
     QVector<RowState> newRows;
 
-    auto hashRow = [](const QStringList &fields) -> QByteArray {
+    auto hashRow = [](QStringList const &fields) -> QByteArray {
         return QCryptographicHash::hash(
             fields.join("|").toUtf8(),
             QCryptographicHash::Sha256
@@ -221,7 +120,7 @@ void MainWindow::loadCsv(QString const &csvPath)
         }
         {
             QPushButton *btn = new QPushButton("Open");
-            testsTable->setCellWidget(r, openCol, btn);
+            testsTable->setCellWidget(r, compilationFlowCol, btn);
 
             connect(btn, &QPushButton::clicked, this, [this, fields]() {
                 QString title = "Compilation Flow (" + fields[0] + ")";
@@ -229,7 +128,7 @@ void MainWindow::loadCsv(QString const &csvPath)
                 flow->show();
             });
         }
-        for (int c = 0; c < requiredCsvColumnCount; c++) {
+        for (int c = 0; c < requiredCsvColumnCount; ++c) {
             QTableWidgetItem *item = new QTableWidgetItem(fields[c]);
             item->setFlags(item->flags() & ~Qt::ItemIsEditable);
             testsTable->setItem(r, firstCsvCol + c, item);
@@ -258,7 +157,7 @@ void MainWindow::onCsvPathChanged(const QString &path)
     loadCsv(path);
 }
 
-void MainWindow::onCsvFileModified(const QString &path)
+void MainWindow::onCsvFileModified(QString const &path)
 {
     qDebug() << "MainWindow::onCsvFileModified( " << path << " )";
 
@@ -277,7 +176,7 @@ void MainWindow::onTableItemChanged(QTableWidgetItem *item)
 
     int row = item->row();
     int col = item->column();
-    QString value = item->text();
+    QString const &value = item->text();
 
     qDebug() << "Cell changed: row" << row << "col" << col << "->" << value;
 
@@ -289,10 +188,7 @@ void MainWindow::onTableItemChanged(QTableWidgetItem *item)
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , compilationFlowWindow(nullptr)
 {
-    // ui->setupUi(this);
     QWidget *central = new QWidget(this);
     QVBoxLayout *main_vbox = new QVBoxLayout(central);
     QHBoxLayout *top_hbox = new QHBoxLayout(central);
@@ -313,9 +209,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(csvFilePicker, &FilePicker::fileChanged,
             this, &MainWindow::onCsvPathChanged);
 
-    // CsvTable csvTable = loadCsvFile(csv_picker->file());
     testsTable = new QTableWidget(this);
-    // populateTableWidget(this, table, csvTable);
     loadCsv(csvFilePicker->file());
     testsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     testsTable->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -328,26 +222,4 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(central); // Required for QMainWindow
     resize(900, 600);
-    // connect(ui->btnOpenCompilationFlowWindow, &QPushButton::clicked, this, &MainWindow::on_btnOpenCompilationFlowWindow_clicked);
 }
-
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-void MainWindow::on_btnOpenCompilationFlowWindow_clicked()
-{
-    qDebug() << "CompilationFlowWindow";
-
-    if (!compilationFlowWindow) {
-        compilationFlowWindow = new CompilationFlowWindow(nullptr); // parent optional
-    }
-    compilationFlowWindow->resize(1280, 720);
-    compilationFlowWindow->show();
-    // compilationFlowWindow->showMaximized();
-    // compilationFlowWindow->raise(); // bring to front
-    // compilationFlowWindow->activateWindow(); // focus
-}
-
-#include "MainWindow.moc"

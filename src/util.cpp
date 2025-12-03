@@ -5,8 +5,6 @@
 #include <optional>
 #include <utility>
 
-#include <windows.h>
-
 // #include "stdafx.hpp"
 #include "util.hpp"
 // #include "imgui_dependent_functions.hpp"
@@ -48,16 +46,6 @@ u64 two_u32_to_one_u64(u32 low, u32 high) noexcept
     result |= static_cast<u64>(low);
     return result;
 }
-
-// s32 directory_exists(char const *path_utf8) noexcept
-// {
-//     wchar_t path_utf16[MAX_PATH];
-//     if (!utf8_to_utf16(path_utf8, path_utf16, lengthof(path_utf16))) {
-//         return false;
-//     }
-//     DWORD attributes = GetFileAttributesW(path_utf16);
-//     return (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY));
-// }
 
 std::array<char, 32> format_file_size(u64 file_size, u64 unit_multiplier) noexcept
 {
@@ -188,38 +176,6 @@ std::array<char, 64> time_diff_str(time_point_system_t start, time_point_system_
     time_diff_str_impl(out, ms_diff);
     return out;
 }
-
-// s32 utf8_to_utf16(char const *utf8_text, wchar_t *utf16_text, u64 utf16_text_capacity, std::source_location sloc) noexcept
-// {
-//     assert(utf8_text != nullptr);
-//     assert(utf16_text != nullptr);
-//     assert(utf16_text_capacity > 0);
-
-//     s32 chars_written = MultiByteToWideChar(CP_UTF8, 0, utf8_text, -1, utf16_text, (s32)utf16_text_capacity);
-
-//     if (chars_written == 0) {
-//         auto last_error = get_last_winapi_error();
-//         print_debug_msg({ "FAILED utf8_to_utf16: %d %s", sloc }, last_error.code, last_error.formatted_message.c_str());
-//     }
-
-//     return chars_written;
-// }
-
-// s32 utf16_to_utf8(wchar_t const *utf16_text, char *utf8_text, u64 utf8_text_capacity, std::source_location sloc) noexcept
-// {
-//     assert(utf16_text != nullptr);
-//     assert(utf8_text != nullptr);
-//     assert(utf8_text_capacity > 0);
-
-//     s32 chars_written = WideCharToMultiByte(CP_UTF8, 0, utf16_text, -1, utf8_text, (s32)utf8_text_capacity, "!", nullptr);
-
-//     if (chars_written == 0) {
-//         auto last_error = get_last_winapi_error();
-//         print_debug_msg({ "FAILED utf16_to_utf8: %d %s", sloc }, last_error.code, last_error.formatted_message.c_str());
-//     }
-
-//     return chars_written;
-// }
 
 bool cstr_eq(char const *s1, char const *s2) noexcept
 {
@@ -503,13 +459,6 @@ void cstr_clear(wchar_t *s) noexcept
     s[0] = L'\0';
 }
 
-// bool set_thread_priority(s32 priority_relative_to_normal) noexcept
-// {
-//     HANDLE handle = GetCurrentThread();
-//     auto result = SetThreadPriority(handle, priority_relative_to_normal);
-//     return result;
-// }
-
 char const *cstr_ltrim(char const *s, std::initializer_list<char> const &chars) noexcept
 {
     char const *retval = s;
@@ -589,23 +538,6 @@ build_mode get_build_mode() noexcept
     return retval;
 }
 
-// std::pair<s32, std::array<char, 64>> filetime_to_string(FILETIME *time) noexcept
-// {
-//     std::array<char, 64> buffer_raw;
-//     std::array<char, 64> buffer_final;
-
-//     DWORD flags = FDTF_SHORTDATE | FDTF_SHORTTIME;
-//     s32 length = SHFormatDateTimeA(time, &flags, buffer_raw.data(), (u32)buffer_raw.size());
-
-//     // for some reason, SHFormatDateTimeA will pad parts of the string with ASCII 63 (?)
-//     // when using LONGDATE or LONGTIME, we are discarding them
-//     std::copy_if(buffer_raw.begin(), buffer_raw.end(), buffer_final.begin(), [](char ch) noexcept { return ch != '?'; });
-
-//     // std::replace(buffer_final.begin(), buffer_final.end(), '-', ' ');
-
-//     return { length, buffer_final };
-// }
-
 bool cstr_starts_with(char const *str, char const *prefix) noexcept
 {
     assert(str != nullptr);
@@ -623,7 +555,7 @@ time_point_system_t extract_system_time_from_istream(std::istream &in_stream) no
 }
 
 // from https://stackoverflow.com/a/744822
-bool cstr_ends_with(const char *str, const char *suffix) noexcept
+bool cstr_ends_with(char const *str, char const *suffix) noexcept
 {
     if (!str || !suffix)
         return 0;
@@ -642,86 +574,4 @@ void cstr_fill(wchar_t *s, wchar_t fill_ch) noexcept
         *s = fill_ch;
         ++s;
     }
-}
-
-// std::optional<bool> win32_is_mouse_inside_window(HWND hwnd) noexcept
-// {
-//     POINT cp;
-//     if (!GetCursorPos(&cp)) {
-//         print_debug_msg("FAILED GetCursorPos: %s", get_last_winapi_error().formatted_message.c_str());
-//         return std::nullopt;
-//     }
-
-//     RECT wr;
-//     if (!GetWindowRect(hwnd, &wr)) {
-//         print_debug_msg("FAILED GetWindowRect: %s", get_last_winapi_error().formatted_message.c_str());
-//         return std::nullopt;
-//     }
-
-//     bool result = cp.x >= wr.left && cp.x <= wr.right && cp.y >= wr.top && cp.y <= wr.bottom;
-
-//     if (result) {
-//         // Get the window handle at the cursor position
-//         HWND hwnd_under_cursor = WindowFromPoint(cp);
-
-//         // If the window under the cursor is not the target window, the cursor is covered
-//         if (hwnd_under_cursor != hwnd) {
-//             // Check if the window is a child window of hwnd
-//             HWND parent = hwnd;
-//             while (parent != NULL) {
-//                 if (hwnd_under_cursor == parent) {
-//                     return false; // Covered by a child window
-//                 }
-//                 parent = GetParent(parent);
-//             }
-//             // If the window is not a child and it covers the target window
-//             return false;
-//         }
-//     }
-
-// // #if DEBUG_MODE
-// //     print_debug_msg("%s " ICON_FA_MOUSE_POINTER " (%d, %d) " ICON_CI_SCREEN_FULL " (%d, %d), (%d, %d)",
-// //         (result ? ICON_CI_PASS_FILLED : ICON_CI_CIRCLE_LARGE_FILLED), cp.x, cp.y, wr.left, wr.top, wr.right, wr.bottom);
-// // #endif
-
-//     return result;
-// }
-
-bool path_drive_like(char const *path, u64 len) noexcept
-{
-    if (len == 0) len = strlen(path);
-    return (len == 2 && IsCharAlphaA(path[0]) && path[1] == ':')
-        || (len == 3 && IsCharAlphaA(path[0]) && path[1] == ':' && strchr("\\/", path[2]));
-}
-
-std::pair<bool, std::string> utf8_lowercase(char const *utf8_text) noexcept
-{
-    // Step 1: Convert UTF-8 to UTF-16
-    int wchar_cnt = MultiByteToWideChar(CP_UTF8, 0, utf8_text, -1, nullptr, 0);
-    if (wchar_cnt == 0) {
-        return { false, "Failed to convert UTF-8 to UTF-16." };
-    }
-
-    std::vector<wchar_t> utf16_chars(wchar_cnt);
-    MultiByteToWideChar(CP_UTF8, 0, utf8_text, -1, utf16_chars.data(), wchar_cnt);
-
-    // Step 2: Convert to lowercase using LCMapStringW
-    int lower_char_cnt = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, utf16_chars.data(), -1, nullptr, 0);
-    if (lower_char_cnt == 0) {
-        return { false, "Failed to map string to lowercase." };
-    }
-
-    std::vector<wchar_t> utf16_chars_lower(lower_char_cnt);
-    LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, utf16_chars.data(), -1, utf16_chars_lower.data(), lower_char_cnt);
-
-    // Step 3: Convert UTF-16 back to UTF-8
-    int utf8_char_cnt = WideCharToMultiByte(CP_UTF8, 0, utf16_chars_lower.data(), -1, nullptr, 0, nullptr, nullptr);
-    if (utf8_char_cnt == 0) {
-        return { false, "Failed to convert UTF-16 to UTF-8." };
-    }
-
-    std::vector<char> utf8_chars_lower(utf8_char_cnt);
-    WideCharToMultiByte(CP_UTF8, 0, utf16_chars_lower.data(), -1, utf8_chars_lower.data(), utf8_char_cnt, nullptr, nullptr);
-
-    return { true, std::string(utf8_chars_lower.data()) };
 }
