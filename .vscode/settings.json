@@ -23,5 +23,7 @@
         "variant": "cpp",
         "xstring": "cpp"
     },
-    "C_Cpp.default.compilerPath": "cl.exe"
+    "C_Cpp.default.compilerPath": "cl.exe",
+
+    "json.validate.enable": false // The only way to disable stupid warning in launch.json for "justMyCode": true
 }

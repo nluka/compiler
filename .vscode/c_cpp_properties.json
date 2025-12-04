@@ -15,7 +15,6 @@
             "defines": [],
             "compilerPath": "cl.exe",
             "intelliSenseMode": "windows-msvc-x64",
-            // "configurationProvider": "ms-vscode.cmake-tools",
             "cStandard": "c17",
             "cppStandard": "c++20"
         }

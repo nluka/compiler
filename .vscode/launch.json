@@ -15,10 +15,18 @@
             "windows": {
             },
             "environment": [
-                { "name": "PATH", "value": "${env:PATH};${command:qt-cpp.qtDir}" },
+                // C:/Program Files/LLVM/lib/clang/14.0.6/lib/windows/clang_rt.asan_dynamic-x86_64.dll
+                // C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll
+                // C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/bin/Hostx86/x64/clang_rt.asan_dynamic-x86_64.dll
+                // C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/clang_rt.asan_dynamic-x86_64.dll
+                // C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx86/x64/clang_rt.asan_dynamic-x86_64.dll
+
+                { "name": "PATH", "value": "${env:PATH};${command:qt-cpp.qtDir};C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/bin/Hostx64/x64/" },
                 { "name": "QT_QPA_PLATFORM_PLUGIN_PATH", "value": "${command:qt-cpp.QT_QPA_PLATFORM_PLUGIN_PATH}" },
-                { "name": "QML_IMPORT_PATH", "value": "${command:qt-cpp.QML_IMPORT_PATH}" }
-            ]
+                { "name": "QML_IMPORT_PATH", "value": "${command:qt-cpp.QML_IMPORT_PATH}" },
+                { "name": "ASAN_OPTIONS", "value": "verbosity=1:abort_on_error=1:symbolize=1:detect_stack_use_after_return=1:alloc_dealloc_mismatch=1" },
+            ],
+            "justMyCode": true
         }
     ]
 }

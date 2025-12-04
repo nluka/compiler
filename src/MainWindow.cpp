@@ -12,6 +12,7 @@
 #include <QStringList>
 #include <QMessageBox>
 #include <QCryptographicHash>
+#include <QMenuBar>
 
 #include "util.hpp"
 
@@ -125,6 +126,7 @@ void MainWindow::loadCsv(QString const &csvPath)
             connect(btn, &QPushButton::clicked, this, [this, fields]() {
                 QString title = "Compilation Flow (" + fields[0] + ")";
                 CompilationFlowWindow *flow = new CompilationFlowWindow(nullptr, title);
+                flow->resize(1600, 900);
                 flow->show();
             });
         }
@@ -189,6 +191,30 @@ void MainWindow::onTableItemChanged(QTableWidgetItem *item)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    {
+        QMenuBar *menu_bar = this->menuBar();
+        {
+            QMenu *window_menu = menu_bar->addMenu("&Window");
+            QAction *empty_compilation_flow_action = new QAction("New &Compilation Flow", this);
+            window_menu->addAction(empty_compilation_flow_action);
+            QObject::connect(empty_compilation_flow_action, &QAction::triggered, this, []() {
+                QString title = "Compilation Flow";
+                CompilationFlowWindow *flow = new CompilationFlowWindow(nullptr, title);
+                flow->resize(1600, 900);
+                flow->show();
+            });
+        }
+        {
+            QMenu *debug_menu = menu_bar->addMenu("&Debug");
+            QAction *ASan_action = new QAction("&Trigger ASan", this);
+            debug_menu->addAction(ASan_action);
+            QObject::connect(ASan_action, &QAction::triggered, this, []() {
+                int *p = new int[4];
+                p[4] = 123; // intentional heap buffer overflow
+            });
+        }
+    }
+
     QWidget *central = new QWidget(this);
     QVBoxLayout *main_vbox = new QVBoxLayout(central);
     QHBoxLayout *top_hbox = new QHBoxLayout(central);
