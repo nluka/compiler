@@ -5,7 +5,7 @@
             "includePath": [
                 "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/include", // System headers
 
-                "E:/Dev/compiler/build/CompilerGUI_autogen/include/", // Auto generated headers
+                "E:/Dev/MUSEUM/build/Museum_autogen/include/", // Auto generated headers
 
                 "E:/Qt/Qt5.12.10/5.12.10/winrt_x64_msvc2017/include/",
                 "E:/Qt/Qt5.12.10/5.12.10/winrt_x64_msvc2017/include/QtCore",

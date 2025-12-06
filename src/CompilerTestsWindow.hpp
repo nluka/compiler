@@ -9,12 +9,12 @@
 
 #include "CompilationFlowWindow.hpp"
 
-class MainWindow : public QMainWindow
+class CompilerTestsWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    CompilerTestsWindow(QWidget *parent = nullptr);
 
     void loadCsv(QString const &csvPath);
 

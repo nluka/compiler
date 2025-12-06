@@ -1,4 +1,4 @@
-Phases
+Compiler Phases
 
 - Build GUI skeleton with some hardcoded (but realistic) data to test (source code -> tokens -> AST -> IR) interactivity chain
 

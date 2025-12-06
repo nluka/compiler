@@ -16,11 +16,12 @@
 
 #include "util.hpp"
 
-#include "MainWindow.hpp"
+#include "populateCommonMenuBar.hpp"
+#include "CompilerTestsWindow.hpp"
 
 using CsvTable = QVector<QVector<QString>>;
 
-void MainWindow::loadCsv(QString const &csvPath)
+void CompilerTestsWindow::loadCsv(QString const &csvPath)
 {
     QFile file(csvPath);
     if (!file.open(QIODevice::ReadOnly))
@@ -125,9 +126,10 @@ void MainWindow::loadCsv(QString const &csvPath)
 
             connect(btn, &QPushButton::clicked, this, [this, fields]() {
                 QString title = "Compilation Flow (" + fields[0] + ")";
-                CompilationFlowWindow *flow = new CompilationFlowWindow(nullptr, title);
-                flow->resize(1600, 900);
-                flow->show();
+                CompilationFlowWindow *w = new CompilationFlowWindow(nullptr, title);
+                w->setAttribute(Qt::WA_DeleteOnClose);
+                w->resize(1600, 900);
+                w->show();
             });
         }
         for (int c = 0; c < requiredCsvColumnCount; ++c) {
@@ -141,14 +143,14 @@ void MainWindow::loadCsv(QString const &csvPath)
 
     // Listen for when a row gets updated so we can update the RowState (testRows) accordingly
     connect(testsTable, &QTableWidget::itemChanged,
-            this, &MainWindow::onTableItemChanged);
+            this, &CompilerTestsWindow::onTableItemChanged);
 
     testRows = newRows;
 }
 
-void MainWindow::onCsvPathChanged(const QString &path)
+void CompilerTestsWindow::onCsvPathChanged(const QString &path)
 {
-    qDebug() << "MainWindow::onCsvPathChanged( " << path << " )";
+    qDebug() << "CompilerTestsWindow::onCsvPathChanged( " << path << " )";
 
     if (path.isEmpty())
         return;
@@ -159,9 +161,9 @@ void MainWindow::onCsvPathChanged(const QString &path)
     loadCsv(path);
 }
 
-void MainWindow::onCsvFileModified(QString const &path)
+void CompilerTestsWindow::onCsvFileModified(QString const &path)
 {
-    qDebug() << "MainWindow::onCsvFileModified( " << path << " )";
+    qDebug() << "CompilerTestsWindow::onCsvFileModified( " << path << " )";
 
     // Text editors often rewrite the file, so the watcher is lost.
     // Re-add the path to keep watching it.
@@ -171,7 +173,7 @@ void MainWindow::onCsvFileModified(QString const &path)
     loadCsv(path);
 }
 
-void MainWindow::onTableItemChanged(QTableWidgetItem *item)
+void CompilerTestsWindow::onTableItemChanged(QTableWidgetItem *item)
 {
     if (testsTableIsPopulating)
         return;
@@ -188,52 +190,32 @@ void MainWindow::onTableItemChanged(QTableWidgetItem *item)
     }
 }
 
-MainWindow::MainWindow(QWidget *parent)
+CompilerTestsWindow::CompilerTestsWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    {
-        QMenuBar *menu_bar = this->menuBar();
-        {
-            QMenu *window_menu = menu_bar->addMenu("&Window");
-            QAction *empty_compilation_flow_action = new QAction("New &Compilation Flow", this);
-            window_menu->addAction(empty_compilation_flow_action);
-            QObject::connect(empty_compilation_flow_action, &QAction::triggered, this, []() {
-                QString title = "Compilation Flow";
-                CompilationFlowWindow *flow = new CompilationFlowWindow(nullptr, title);
-                flow->resize(1600, 900);
-                flow->show();
-            });
-        }
-        {
-            QMenu *debug_menu = menu_bar->addMenu("&Debug");
-            QAction *ASan_action = new QAction("&Trigger ASan", this);
-            debug_menu->addAction(ASan_action);
-            QObject::connect(ASan_action, &QAction::triggered, this, []() {
-                int *p = new int[4];
-                p[4] = 123; // intentional heap buffer overflow
-            });
-        }
-    }
+    populateCommonMenuBar(this->menuBar());
 
     QWidget *central = new QWidget(this);
+    setCentralWidget(central); // Required for QMainWindow
+
     QVBoxLayout *main_vbox = new QVBoxLayout(central);
     QHBoxLayout *top_hbox = new QHBoxLayout(central);
 
     central->setLayout(main_vbox);
 
-    csvFilePicker = new FilePicker("Tests CSV:", "E:/Dev/compiler/tests/compiler.csv", this);
-    dataDirectoryPicker = new DirectoryPicker("Tests Data:", "E:/Dev/compiler/tests/data", this);
+    csvFilePicker = new FilePicker("Tests CSV:", "E:/Dev/MUSEUM/tests/compiler.csv", this);
+    dataDirectoryPicker = new DirectoryPicker("Tests Data:", "E:/Dev/MUSEUM/tests/data", this);
 
     watcher = new QFileSystemWatcher(this);
     watcher->addPath(csvFilePicker->file());
 
     // When the file is modified, reload the CSV
     connect(watcher, &QFileSystemWatcher::fileChanged,
-            this, &MainWindow::onCsvFileModified);
+            this, &CompilerTestsWindow::onCsvFileModified);
 
     // FilePicker emits fileSelected(QString)
     connect(csvFilePicker, &FilePicker::fileChanged,
-            this, &MainWindow::onCsvPathChanged);
+            this, &CompilerTestsWindow::onCsvPathChanged);
 
     testsTable = new QTableWidget(this);
     loadCsv(csvFilePicker->file());
@@ -245,7 +227,4 @@ MainWindow::MainWindow(QWidget *parent)
 
     main_vbox->addLayout(top_hbox);
     main_vbox->addWidget(testsTable);
-
-    setCentralWidget(central); // Required for QMainWindow
-    resize(900, 600);
 }

@@ -4,15 +4,19 @@
 
 static_assert(sizeof(int8_t) == 1);
 typedef int8_t s8;
+typedef int8_t i8;
 
 static_assert(sizeof(int16_t) == 2);
 typedef int16_t s16;
+typedef int16_t i16;
 
 static_assert(sizeof(int32_t) == 4);
 typedef int32_t s32;
+typedef int32_t i32;
 
 static_assert(sizeof(int64_t) == 8);
 typedef int64_t s64;
+typedef int64_t i64;
 
 static_assert(sizeof(uint8_t) == 1);
 typedef uint8_t u8;

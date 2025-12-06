@@ -5,7 +5,7 @@
 #include <QApplication>
 #include <QDebug>
 
-#include "mainwindow.hpp"
+#include "StartWindow.hpp"
 
 extern "C" void __asan_init();
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     qDebug() << "ASAN_OPTIONS =" << getenv("ASAN_OPTIONS");
 
     QApplication a(argc, argv);
-    MainWindow w;
-    w.showMaximized();
+    StartWindow w;
+    w.show();
     return a.exec();
 }

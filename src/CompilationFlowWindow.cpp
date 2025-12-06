@@ -248,8 +248,6 @@ CompilationFlowWindow::CompilationFlowWindow(QWidget *parent, QString const &tit
         connectNodes(scene, right1, right3);
     }
     ZoomableGraphicsView *view = new ZoomableGraphicsView(scene);
-    view->setRenderHint(QPainter::Antialiasing);
-    view->setDragMode(QGraphicsView::ScrollHandDrag);
     view->setWindowTitle("AST Tree Example");
     scene->centerViewOnItems(view);
     view->show();

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(CompilerGUI LANGUAGES CXX)
+project(Museum LANGUAGES CXX)
 
 # -------------------------
 # Qt Setup
@@ -31,7 +31,7 @@ file(GLOB_RECURSE SOURCES
     "src/*.h"
 )
 
-add_executable(CompilerGUI ${SOURCES})
+add_executable(Museum ${SOURCES})
 
 # -------------------------
 # ASAN (clang, gcc, msvc)
@@ -39,14 +39,14 @@ add_executable(CompilerGUI ${SOURCES})
 message(STATUS "AddressSanitizer enabled")
 
 if (MSVC)
-    target_compile_options(CompilerGUI PRIVATE /fsanitize=address)
-    target_link_options(CompilerGUI PRIVATE /fsanitize=address)
+    target_compile_options(Museum PRIVATE /fsanitize=address)
+    # target_link_options(Museum PRIVATE /fsanitize=address)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    target_compile_options(CompilerGUI PRIVATE
+    target_compile_options(Museum PRIVATE
         -fsanitize=address
         -fno-omit-frame-pointer
     )
-    target_link_options(CompilerGUI PRIVATE
+    target_link_options(Museum PRIVATE
         -fsanitize=address
     )
 endif()
@@ -54,7 +54,7 @@ endif()
 # -------------------------
 # Link Qt
 # -------------------------
-target_link_libraries(CompilerGUI
+target_link_libraries(Museum
     PRIVATE
         Qt5::Core
         Qt5::Gui
@@ -62,7 +62,7 @@ target_link_libraries(CompilerGUI
 )
 
 set_property(
-    TARGET CompilerGUI PROPERTY VS_DEBUGGER_COMMAND $<TARGET_FILE:CompilerGUI>
+    TARGET Museum PROPERTY VS_DEBUGGER_COMMAND $<TARGET_FILE:Museum>
 )
 
 # -------------------------
@@ -70,7 +70,7 @@ set_property(
 # -------------------------
 include(GNUInstallDirs)
 
-install(TARGETS CompilerGUI
+install(TARGETS Museum
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -79,7 +79,7 @@ install(TARGETS CompilerGUI
 if (WIN32)
     install(CODE "
         execute_process(
-            COMMAND \"${QT_ROOT}/bin/windeployqt.exe\" \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/CompilerGUI.exe\"
+            COMMAND \"${QT_ROOT}/bin/windeployqt.exe\" \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/Museum.exe\"
         )
     ")
 endif()
